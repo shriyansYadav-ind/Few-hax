@@ -1,66 +1,86 @@
 #!/bin/bash
 
-echo -e "\033]0;MultiTool - by Plutonicdarwf\091"
+# Colors (safe for Termux)
+RED="\033[31m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+BLUE="\033[34m"
+CYAN="\033[36m"
+WHITE="\033[37m"
+RESET="\033[0m"
 
-cd files 2>/dev/null
+# Loading screen
+clear
+echo -e "${CYAN}"
+echo "Starting MultiTool..."
+sleep 1
+echo "Loading modules..."
+sleep 1
+echo -e "${RESET}"
 
 while true
 do
     clear
 
     # Banner
+    echo -e "${RED}"
+    echo "███╗   ███╗██╗   ██╗██╗  ████████╗██╗"
+    echo "████╗ ████║██║   ██║██║  ╚══██╔══╝██║"
+    echo "██╔████╔██║██║   ██║██║     ██║   ██║"
+    echo "██║╚██╔╝██║██║   ██║██║     ██║   ██║"
+    echo "██║ ╚═╝ ██║╚██████╔╝███████╗██║   ██║"
+    echo "╚═╝     ╚═╝ ╚═════╝ ╚══════╝╚═╝   ╚═╝"
+    echo -e "${RESET}"
+
+    echo -e "${YELLOW}========== MULTITOOL MENU ==========${RESET}"
     echo
-    echo
-    echo -e "\e[38;2;255;0;0m███╗   ███╗██╗   ██╗██╗  ████████╗██╗    ████████╗ ██████╗  ██████╗ ██╗\e[0m"
-    echo -e "\e[38;2;255;51;0m████╗ ████║██║   ██║██║  ╚══██╔══╝██║    ╚══██╔══╝██╔═══██╗██╔═══██╗██║\e[0m"
-    echo -e "\e[38;2;255;102;0m██╔████╔██║██║   ██║██║     ██║   ██║       ██║   ██║   ██║██║   ██║██║\e[0m"
-    echo -e "\e[38;2;255;153;0m██║╚██╔╝██║██║   ██║██║     ██║   ██║       ██║   ██║   ██║██║   ██║██║\e[0m"
-    echo -e "\e[38;2;255;204;0m██║ ╚═╝ ██║╚██████╔╝███████╗██║   ██║       ██║   ╚██████╔╝╚██████╔╝███████╗\e[0m"
-    echo -e "\e[38;2;255;255;0m╚═╝     ╚═╝ ╚═════╝ ╚══════╝╚═╝   ╚═╝       ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝\e[0m"
+    echo -e "${GREEN}[1] IP Scanner${RESET}"
+    echo -e "${GREEN}[2] DNS Lookup${RESET}"
+    echo -e "${GREEN}[3] Ping Test${RESET}"
+    echo -e "${GREEN}[4] System Info${RESET}"
+    echo -e "${GREEN}[0] Exit${RESET}"
     echo
 
-    # Menu
-    echo -e "\e[38;2;255;255;0m        ╔═(1) IP Scanner\e[0m"
-    echo -e "\e[38;2;255;255;0m        ╠══(2) DNS Lookup\e[0m"
-    echo -e "\e[38;2;255;255;0m        ╠═══(3) Ping Test\e[0m"
-    echo -e "\e[38;2;255;255;0m        ╚════(4) System Info\e[0m"
+    read -p "Select option > " choice
 
-    echo
-    read -p "        ╚══════> " input
-
-    case $input in
+    case $choice in
         1)
-            echo "Enter base IP (example: 192.168.1): "
+            echo -e "${CYAN}Enter base IP (example: 192.168.1):${RESET}"
             read baseip
             echo "Scanning..."
             for i in {1..10}
             do
-                ping -c 1 $baseip.$i > /dev/null 2>&1 && echo "$baseip.$i is UP"
+                ping -c 1 $baseip.$i > /dev/null 2>&1 && echo -e "${GREEN}$baseip.$i is UP${RESET}"
             done
             ;;
 
         2)
-            echo "Enter domain (example: google.com): "
+            echo -e "${CYAN}Enter domain:${RESET}"
             read domain
             nslookup $domain
             ;;
 
         3)
-            echo "Enter IP or domain: "
+            echo -e "${CYAN}Enter IP or domain:${RESET}"
             read host
             ping -c 4 $host
             ;;
 
         4)
-            echo "System Information:"
+            echo -e "${YELLOW}System Info:${RESET}"
             uname -a
             echo
             echo "IP Address:"
             hostname -I
             ;;
 
+        0)
+            echo -e "${RED}Exiting...${RESET}"
+            exit
+            ;;
+
         *)
-            echo "Invalid option"
+            echo -e "${RED}Invalid option${RESET}"
             ;;
     esac
 
