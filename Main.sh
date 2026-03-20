@@ -1,13 +1,12 @@
 #!/bin/bash
 
-# Colors (Termux safe)
+# Colors
 RED="\033[31m"
 GREEN="\033[32m"
 YELLOW="\033[33m"
 CYAN="\033[36m"
 RESET="\033[0m"
 
-# Startup
 clear
 echo -e "${CYAN}Starting MultiTool...${RESET}"
 sleep 1
@@ -36,6 +35,7 @@ do
     echo -e "${GREEN}[6] WHOIS + DNS${RESET}"
     echo -e "${GREEN}[7] Password Strength Checker${RESET}"
     echo -e "${GREEN}[8] IP + Geo Info${RESET}"
+    echo -e "${GREEN}[9] IP Details / Analyzer${RESET}"
     echo -e "${GREEN}[0] Exit${RESET}"
     echo
 
@@ -112,6 +112,28 @@ do
             echo "Public IP: $ip"
             echo "Geo Info:"
             curl -s "http://ip-api.com/json/$ip" | sed 's/,/\n/g'
+            ;;
+
+        9)
+            echo -e "${CYAN}Enter IP (leave blank for your IP):${RESET}"
+            read ip
+
+            if [ -z "$ip" ]; then
+                ip=$(curl -s ifconfig.me)
+                echo -e "${YELLOW}Your Public IP: $ip${RESET}"
+            fi
+
+            echo
+            echo -e "${CYAN}Fetching details...${RESET}"
+            echo
+
+            data=$(curl -s "http://ip-api.com/json/$ip")
+
+            echo "IP: $(echo $data | grep -o '"query":"[^"]*' | cut -d'"' -f4)"
+            echo "Country: $(echo $data | grep -o '"country":"[^"]*' | cut -d'"' -f4)"
+            echo "Region: $(echo $data | grep -o '"regionName":"[^"]*' | cut -d'"' -f4)"
+            echo "City: $(echo $data | grep -o '"city":"[^"]*' | cut -d'"' -f4)"
+            echo "ISP: $(echo $data | grep -o '"isp":"[^"]*' | cut -d'"' -f4)"
             ;;
 
         0)
